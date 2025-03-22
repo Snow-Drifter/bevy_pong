@@ -1,26 +1,30 @@
-use bevy::{prelude::*, input::keyboard::KeyboardInput};
+use bevy::{
+    input::keyboard::KeyboardInput, prelude::*, render::camera::ScalingMode
+};
 
 mod ball;
 mod paddle;
-mod scoreboard;
 mod pixel_grid;
+mod scoreboard;
 
-use scoreboard::ScoreBoard;
 use pixel_grid::{PIXEL_SIZE, get_half_screen_size};
+use scoreboard::ScoreBoard;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: (
-                    pixel_grid::GRID_WIDTH as f32 * PIXEL_SIZE,
-                    pixel_grid::GRID_HEIGHT as f32 * PIXEL_SIZE,
-                ).into(),
-                title: "Pixel Pong".to_string(),
+        .add_plugins(
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: (
+                        pixel_grid::GRID_WIDTH as f32 * PIXEL_SIZE,
+                        pixel_grid::GRID_HEIGHT as f32 * PIXEL_SIZE,
+                    ).into(),
+                    title: "Pixel Pong".to_string(),
+                    ..default()
+                }),
                 ..default()
             }),
-            ..default()
-        }))
+        )
         .insert_resource(ScoreBoard::default())
         .add_systems(Startup, setup)
         .add_systems(Startup, paddle::spawn_left_paddle)
@@ -35,12 +39,20 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    let camera = Camera2d;
+    let projection = OrthographicProjection {
+        scaling_mode: ScalingMode::AutoMin {
+            min_width: pixel_grid::GRID_WIDTH as f32 * PIXEL_SIZE,
+            min_height: pixel_grid::GRID_HEIGHT as f32 * PIXEL_SIZE,
+        },
+        ..OrthographicProjection::default_2d()
+    };
+    commands.spawn((camera, projection));
 }
 
 fn spawn_background(mut commands: Commands) {
     let (half_width, half_height) = get_half_screen_size();
-    
+
     // Create grid border
     commands.spawn((
         Sprite {
@@ -50,21 +62,24 @@ fn spawn_background(mut commands: Commands) {
         },
         Transform::from_translation(Vec3::new(0.0, 0.0, -0.1)),
     ));
-    
+
     // Create center line
-    let center_pixel_size = PIXEL_SIZE * 0.5; // Half pixel size for center line
-    let center_offset = if pixel_grid::GRID_HEIGHT % 2 == 0 { PIXEL_SIZE / 2.0 } else { 0.0 }; // Offset for even grid heights
-    
+    let center_pixel_size = PIXEL_SIZE * 0.5;
+    let center_offset = 0.0;
+
     for y in -((pixel_grid::GRID_HEIGHT / 2) as i32)..(pixel_grid::GRID_HEIGHT / 2) as i32 {
-        // Skip every other pixel for dashed line
         if y % 2 == 0 {
             commands.spawn((
                 Sprite {
                     color: Color::srgb(0.3, 0.3, 0.3),
-                    custom_size: Some(Vec2::new(center_pixel_size, center_pixel_size)), // Square pixels
+                    custom_size: Some(Vec2::new(center_pixel_size, center_pixel_size)),
                     ..default()
                 },
-                Transform::from_translation(Vec3::new(0.0, (y as f32 * PIXEL_SIZE) + center_offset, -0.05)),
+                Transform::from_translation(Vec3::new(
+                    0.0,
+                    (y as f32 * PIXEL_SIZE) + center_offset,
+                    -0.05,
+                )),
             ));
         }
     }
