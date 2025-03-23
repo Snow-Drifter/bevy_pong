@@ -17,6 +17,7 @@ pub struct Velocity {
     pub y: f32,
 }
 
+// Tracks ball bounces to control speed progression
 #[derive(Component, Default)]
 pub struct BounceCount(u32);
 
@@ -40,6 +41,29 @@ pub fn spawn_ball(mut commands: Commands) {
     ));
 }
 
+/// Check if two rectangles are colliding
+fn is_colliding(
+    ball_pos: Vec3,
+    ball_size: Vec2,
+    paddle_pos: Vec3,
+    paddle_size: Vec2,
+) -> bool {
+    ball_pos.x - ball_size.x/2.0 <= paddle_pos.x + paddle_size.x/2.0 && 
+    ball_pos.x + ball_size.x/2.0 >= paddle_pos.x - paddle_size.x/2.0 &&
+    ball_pos.y + ball_size.y/2.0 >= paddle_pos.y - paddle_size.y/2.0 &&
+    ball_pos.y - ball_size.y/2.0 <= paddle_pos.y + paddle_size.y/2.0
+}
+
+/// Get speed multiplier based on bounce count
+fn get_speed_multiplier(bounce_count: u32) -> Vec2 {
+    match bounce_count {
+        0..=3 => Vec2::new(1.0, 1.0),
+        4..=11 => Vec2::new(1.6, 1.0),
+        _ => Vec2::new(2.1, 1.0)
+    }
+}
+
+// Main ball update system - handles movement, collisions and scoring
 pub fn update_ball(
     mut ball_query: Query<(&mut Transform, &mut Velocity, &mut BounceCount, &Sprite), With<Ball>>,
     left_paddle_query: Query<(&Transform, &Sprite), (With<LeftPaddle>, Without<Ball>)>,
@@ -63,83 +87,102 @@ pub fn update_ball(
         let left_paddle_size = left_paddle_sprite.custom_size.unwrap();
         let right_paddle_size = right_paddle_sprite.custom_size.unwrap();
         
-        let speed_multiplier = match bounce_count.0 {
-            0..=3 => {
-                Vec2::new(1.0, 1.0)
-            },
-            4..=11 => {
-                Vec2::new(1.6, 1.0)
-            },
-            _ => {
-                Vec2::new(2.1, 1.0)
-            }
-        };
+        // Speed increases after multiple bounces
+        let speed_multiplier = get_speed_multiplier(bounce_count.0);
 
-        // Calculate movement for this frame
+        // Calculate and apply movement
         let delta = time.delta_secs();
         let movement = Vec2::new(velocity.x * delta * speed_multiplier.x, velocity.y * delta * speed_multiplier.y);
         
-        // Apply movement
         transform.translation.x += movement.x;
         transform.translation.y += movement.y;
         
-        // Collision detection with left paddle
-        if transform.translation.x - ball_size.x/2.0 <= left_paddle.translation.x + left_paddle_size.x/2.0 && 
-           transform.translation.x + ball_size.x/2.0 >= left_paddle.translation.x - left_paddle_size.x/2.0 &&
-           transform.translation.y + ball_size.y/2.0 >= left_paddle.translation.y - left_paddle_size.y/2.0 &&
-           transform.translation.y - ball_size.y/2.0 <= left_paddle.translation.y + left_paddle_size.y/2.0 &&
-           velocity.x < 0.0
-        {
-            // Ball hit the left paddle, reverse x direction
-            velocity.x = -velocity.x;
-            // Push the ball outside the paddle to prevent sticking
-            transform.translation.x = left_paddle.translation.x + left_paddle_size.x/2.0 + ball_size.x/2.0;
-            bounce_count.0 += 1;
-        }
-        // Collision detection with right paddle
-        else if transform.translation.x + ball_size.x/2.0 >= right_paddle.translation.x - right_paddle_size.x/2.0 &&
-                transform.translation.x - ball_size.x/2.0 <= right_paddle.translation.x + right_paddle_size.x/2.0 &&
-                transform.translation.y + ball_size.y/2.0 >= right_paddle.translation.y - right_paddle_size.y/2.0 &&
-                transform.translation.y - ball_size.y/2.0 <= right_paddle.translation.y + right_paddle_size.y/2.0 &&
-                velocity.x > 0.0
-        {
-            // Ball hit the right paddle, reverse x direction
-            velocity.x = -velocity.x;
-            // Push the ball outside the paddle to prevent sticking
-            transform.translation.x = right_paddle.translation.x - right_paddle_size.x/2.0 - ball_size.x/2.0;
-            bounce_count.0 += 1;
-        }
+        handle_paddle_collisions(
+            &mut transform, 
+            &mut velocity, 
+            &mut bounce_count,
+            ball_size,
+            left_paddle.translation, 
+            left_paddle_size,
+            right_paddle.translation, 
+            right_paddle_size
+        );
         
-        // Bounce off the top and bottom edges
-        if transform.translation.y > half_height - ball_size.y/2.0 {
-            velocity.y = -velocity.y.abs(); // Ensure negative
-            transform.translation.y = half_height - ball_size.y/2.0;
-        } else if transform.translation.y < -half_height + ball_size.y/2.0 {
-            velocity.y = velocity.y.abs(); // Ensure positive
-            transform.translation.y = -half_height + ball_size.y/2.0;
-        }
+        handle_wall_collisions(&mut transform, &mut velocity, ball_size, half_height);
         
-        // Scoring logic for left/right sides
-        if transform.translation.x > half_width {
-            // Left player scores
-            score_event_writer.send(ScoreEvent::LeftScored);
-        } else if transform.translation.x < -half_width {
-            // Right player scores
-            score_event_writer.send(ScoreEvent::RightScored);
-        }
+        check_for_scoring(&transform, half_width, &mut score_event_writer);
     }
 }
 
+fn handle_paddle_collisions(
+    transform: &mut Transform,
+    velocity: &mut Velocity,
+    bounce_count: &mut BounceCount,
+    ball_size: Vec2,
+    left_paddle_pos: Vec3,
+    left_paddle_size: Vec2,
+    right_paddle_pos: Vec3,
+    right_paddle_size: Vec2,
+) {
+    // Check left paddle collision
+    if is_colliding(transform.translation, ball_size, left_paddle_pos, left_paddle_size) && velocity.x < 0.0 {
+        velocity.x = -velocity.x;
+        // Push the ball outside the paddle to prevent sticking
+        transform.translation.x = left_paddle_pos.x + left_paddle_size.x/2.0 + ball_size.x/2.0;
+        bounce_count.0 += 1;
+    }
+    // Check right paddle collision
+    else if is_colliding(transform.translation, ball_size, right_paddle_pos, right_paddle_size) && velocity.x > 0.0 {
+        velocity.x = -velocity.x;
+        // Push the ball outside the paddle to prevent sticking
+        transform.translation.x = right_paddle_pos.x - right_paddle_size.x/2.0 - ball_size.x/2.0;
+        bounce_count.0 += 1;
+    }
+}
+
+fn handle_wall_collisions(
+    transform: &mut Transform,
+    velocity: &mut Velocity,
+    ball_size: Vec2,
+    half_height: f32
+) {
+    // Bounce off the top wall
+    if transform.translation.y > half_height - ball_size.y/2.0 {
+        velocity.y = -velocity.y.abs(); // Ensure negative
+        transform.translation.y = half_height - ball_size.y/2.0;
+    } 
+    // Bounce off the bottom wall
+    else if transform.translation.y < -half_height + ball_size.y/2.0 {
+        velocity.y = velocity.y.abs(); // Ensure positive
+        transform.translation.y = -half_height + ball_size.y/2.0;
+    }
+}
+
+// Checks if ball went past paddles and sends appropriate score events
+fn check_for_scoring(
+    transform: &Transform, 
+    half_width: f32,
+    score_event_writer: &mut EventWriter<ScoreEvent>
+) {
+    // Right side (left player scores)
+    if transform.translation.x > half_width {
+        score_event_writer.send(ScoreEvent::LeftScored);
+    } 
+    // Left side (right player scores)
+    else if transform.translation.x < -half_width {
+        score_event_writer.send(ScoreEvent::RightScored);
+    }
+}
+
+// Resets ball position and sets velocity after scoring
 pub fn reset_ball_system(
     mut score_events: EventReader<ScoreEvent>,
     mut ball_query: Query<(&mut Transform, &mut Velocity, &mut BounceCount), With<Ball>>,
 ) {
     for event in score_events.read() {
         if let Ok((mut transform, mut velocity, mut bounce_count)) = ball_query.get_single_mut() {
-            // Reset ball position
+            // Reset ball position and bounce count
             transform.translation = Vec3::new(0.0, 0.0, 0.0);
-            
-            // Reset bounce count
             bounce_count.0 = 0;
             
             // Determine direction based on who scored
