@@ -7,7 +7,7 @@ mod pixel_grid;
 mod scoreboard;
 mod window;
 
-use scoreboard::ScoreBoard;
+use scoreboard::{ScoreBoard, ScoreEvent};
 
 fn main() {
     App::new()
@@ -15,6 +15,7 @@ fn main() {
             DefaultPlugins.set(window::get_window_settings()),
         )
         .insert_resource(ScoreBoard::default())
+        .add_event::<ScoreEvent>()
         .add_systems(Startup, (
             window::setup_camera,
             paddle::spawn_left_paddle,
@@ -27,6 +28,8 @@ fn main() {
             paddle::move_left_paddle,
             paddle::move_right_paddle,
             ball::update_ball,
+            scoreboard::update_scoreboard,
+            ball::reset_ball_system,
         ))
         .run();
 }
