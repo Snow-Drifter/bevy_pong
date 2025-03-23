@@ -7,7 +7,6 @@ mod pixel_grid;
 mod scoreboard;
 mod window;
 
-use pixel_grid::get_half_screen_size;
 use scoreboard::ScoreBoard;
 
 fn main() {
@@ -16,15 +15,19 @@ fn main() {
             DefaultPlugins.set(window::get_window_settings()),
         )
         .insert_resource(ScoreBoard::default())
-        .add_systems(Startup, window::setup_camera)
-        .add_systems(Startup, paddle::spawn_left_paddle)
-        .add_systems(Startup, paddle::spawn_right_paddle)
-        .add_systems(Startup, background::spawn_background)
-        .add_systems(Startup, ball::spawn_ball)
-        .add_systems(Update, window::close_on_escape)
-        .add_systems(Update, paddle::move_left_paddle)
-        .add_systems(Update, paddle::move_right_paddle)
-        .add_systems(Update, ball::update_ball)
+        .add_systems(Startup, (
+            window::setup_camera,
+            paddle::spawn_left_paddle,
+            paddle::spawn_right_paddle,
+            background::spawn_background,
+            ball::spawn_ball,
+        ))
+        .add_systems(Update, (
+            window::close_on_escape,
+            paddle::move_left_paddle,
+            paddle::move_right_paddle,
+            ball::update_ball,
+        ))
         .run();
 }
 
