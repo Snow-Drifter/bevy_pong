@@ -1,10 +1,10 @@
 use bevy::prelude::*;
-use crate::paddle::{LeftPaddle, RightPaddle};
+use crate::paddle::{LeftPaddle, RightPaddle, PADDLE_WIDTH};
 use crate::scoreboard::ScoreBoard;
 use crate::pixel_grid::get_half_screen_size;
 
-pub const BALL_HEIGHT: f32 = 25.0;
-pub const BALL_WIDTH: f32 = 25.0;
+pub const BALL_HEIGHT: f32 = PADDLE_WIDTH;
+pub const BALL_WIDTH: f32 = PADDLE_WIDTH;
 pub const INITIAL_BALL_SPEED: f32 = 125.0;
 
 #[derive(Component)]
@@ -23,7 +23,7 @@ pub fn spawn_ball(mut commands: Commands) {
     commands.spawn((
         Sprite {
             color: Color::WHITE,
-            custom_size: Some(Vec2::new(BALL_WIDTH, BALL_HEIGHT)), // 1x1 pixel ball
+            custom_size: Some(Vec2::new(BALL_WIDTH, BALL_HEIGHT)),
             ..default()
         },
         Transform {
