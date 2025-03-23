@@ -1,6 +1,6 @@
 // Constants for the pixel grid
-pub const GRID_WIDTH: usize = 32; // Horizontal pixels
-pub const GRID_HEIGHT: usize = 24; // Vertical pixels
+pub const GRID_WIDTH: usize = 768; // Horizontal pixels
+pub const GRID_HEIGHT: usize = 480; // Vertical pixels
 pub const PIXEL_SIZE: f32 = 25.0; // Size of each pixel in world units
 
 // Get the size of the screen in world units

@@ -12,6 +12,9 @@ pub struct Velocity {
     pub y: f32,
 }
 
+#[derive(Component, Default)]
+pub struct BounceCount(u32);
+
 pub fn spawn_ball(mut commands: Commands) {
     commands.spawn((
         Sprite {
@@ -28,11 +31,12 @@ pub fn spawn_ball(mut commands: Commands) {
             x: PIXEL_SIZE * 5.0, // Move 5 pixels per second
             y: PIXEL_SIZE * 5.0,
         },
+        BounceCount(0),
     ));
 }
 
 pub fn update_ball(
-    mut ball_query: Query<(&mut Transform, &mut Velocity), With<Ball>>,
+    mut ball_query: Query<(&mut Transform, &mut Velocity, &mut BounceCount), With<Ball>>,
     left_paddle_query: Query<&Transform, (With<LeftPaddle>, Without<Ball>)>,
     right_paddle_query: Query<&Transform, (With<RightPaddle>, Without<Ball>)>,
     time: Res<Time>,
@@ -48,10 +52,22 @@ pub fn update_ball(
     let paddle_height = PIXEL_SIZE * 4.0;
     let ball_size = PIXEL_SIZE;
     
-    for (mut transform, mut velocity) in ball_query.iter_mut() {
+    for (mut transform, mut velocity, mut bounce_count) in ball_query.iter_mut() {
+        let speed_multiplier = match bounce_count.0 {
+            0..=3 => {
+                Vec2::new(1.0, 1.0)
+            },
+            4..=11 => {
+                Vec2::new(1.6, 1.0)
+            },
+            _ => {
+                Vec2::new(2.1, 1.0)
+            }
+        };
+
         // Calculate movement for this frame
         let delta = time.delta_secs();
-        let movement = Vec2::new(velocity.x * delta, velocity.y * delta);
+        let movement = Vec2::new(velocity.x * delta * speed_multiplier.x, velocity.y * delta * speed_multiplier.y);
         
         // Apply movement
         transform.translation.x += movement.x;
@@ -68,6 +84,7 @@ pub fn update_ball(
             velocity.x = -velocity.x;
             // Push the ball outside the paddle to prevent sticking
             transform.translation.x = left_paddle.translation.x + paddle_width/2.0 + ball_size/2.0;
+            bounce_count.0 += 1;
         }
         // Collision detection with right paddle
         else if transform.translation.x + ball_size/2.0 >= right_paddle.translation.x - paddle_width/2.0 &&
@@ -80,6 +97,7 @@ pub fn update_ball(
             velocity.x = -velocity.x;
             // Push the ball outside the paddle to prevent sticking
             transform.translation.x = right_paddle.translation.x - paddle_width/2.0 - ball_size/2.0;
+            bounce_count.0 += 1;
         }
         
         // Bounce off the top and bottom edges
@@ -103,6 +121,7 @@ pub fn update_ball(
             // Send toward right player with slight y variation
             velocity.x = -PIXEL_SIZE * 5.0;
             velocity.y = PIXEL_SIZE * 5.0 * if (score_board.left + score_board.right) % 2 == 0 { 1.0 } else { -1.0 };
+            bounce_count.0 = 0;
         } else if transform.translation.x < -half_width {
             // Right player scores
             score_board.right += 1;
@@ -114,6 +133,7 @@ pub fn update_ball(
             // Send toward left player with slight y variation
             velocity.x = PIXEL_SIZE * 5.0;
             velocity.y = PIXEL_SIZE * 5.0 * if (score_board.left + score_board.right) % 2 == 0 { 1.0 } else { -1.0 };
+            bounce_count.0 = 0;
         }
     }
 } 
