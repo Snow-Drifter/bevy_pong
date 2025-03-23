@@ -1,10 +1,11 @@
 use bevy::prelude::*;
-use crate::{paddle::PADDLE_WIDTH, pixel_grid};
+use crate::{paddle::PADDLE_WIDTH, window::{WIDTH, HEIGHT}};
 
 pub const MIDDLE_LINE_WIDTH: f32 = PADDLE_WIDTH;
 
 pub fn spawn_background(mut commands: Commands) {
-    let (half_width, half_height) = crate::pixel_grid::get_half_screen_size();
+    let half_width = WIDTH as f32 / 2.0;
+    let half_height = HEIGHT as f32 / 2.0;
 
     // Create grid border
     commands.spawn((
@@ -21,7 +22,7 @@ pub fn spawn_background(mut commands: Commands) {
     let center_pixel_height = center_pixel_size * 2.0;
     let center_offset = 0.0;
 
-    for y in -((pixel_grid::GRID_HEIGHT / 2) as i32)..(pixel_grid::GRID_HEIGHT / 2) as i32 {
+    for y in -((HEIGHT / 2) as i32)..(HEIGHT / 2) as i32 {
         if y % 2 == 0 {
             commands.spawn((
                 Sprite {

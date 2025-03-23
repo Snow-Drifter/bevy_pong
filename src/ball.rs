@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::paddle::{LeftPaddle, RightPaddle, PADDLE_WIDTH};
 use crate::scoreboard::ScoreEvent;
-use crate::pixel_grid::get_half_screen_size;
+use crate::window::{WIDTH, HEIGHT};
 use rand::Rng;
 
 pub const BALL_HEIGHT: f32 = PADDLE_WIDTH;
@@ -55,7 +55,8 @@ pub fn update_ball(
         return;
     };
 
-    let (half_width, half_height) = get_half_screen_size();
+    let half_width = WIDTH as f32 / 2.0;
+    let half_height = HEIGHT as f32 / 2.0;
     
     for (mut transform, mut velocity, mut bounce_count, ball_sprite) in ball_query.iter_mut() {
         let ball_size = ball_sprite.custom_size.unwrap();

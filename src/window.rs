@@ -3,12 +3,15 @@ use bevy::{
     prelude::*, 
     render::camera::ScalingMode
 };
-use crate::pixel_grid::{get_screen_size, GRID_HEIGHT, GRID_WIDTH};
+
+// Constants for screen dimensions
+pub const WIDTH: usize = 768;  // Horizontal pixels
+pub const HEIGHT: usize = 480; // Vertical pixels
 
 pub fn get_window_settings() -> WindowPlugin {
     WindowPlugin {
         primary_window: Some(Window {
-            resolution: get_screen_size().into(),
+            resolution: (WIDTH as f32, HEIGHT as f32).into(),
             title: "Pixel Pong".to_string(),
             ..default()
         }),
@@ -31,8 +34,8 @@ pub fn setup_camera(mut commands: Commands) {
     let camera = Camera2d;
     let projection = OrthographicProjection {
         scaling_mode: ScalingMode::AutoMin {
-            min_width: GRID_WIDTH as f32,
-            min_height: GRID_HEIGHT as f32,
+            min_width: WIDTH as f32,
+            min_height: HEIGHT as f32,
         },
         ..OrthographicProjection::default_2d()
     };

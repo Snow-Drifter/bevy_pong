@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::pixel_grid::{GRID_HEIGHT, GRID_WIDTH};
+use crate::window::{HEIGHT, WIDTH};
 
 pub const PADDLE_HEIGHT: f32 = 28.0;
 pub const PADDLE_WIDTH: f32 = 9.0;
@@ -13,7 +13,7 @@ pub struct LeftPaddle;
 pub struct RightPaddle;
 
 pub fn spawn_left_paddle(mut commands: Commands) {
-    let half_width = GRID_WIDTH as f32 / 2.0;
+    let half_width = WIDTH as f32 / 2.0;
     
     commands.spawn((
         Sprite {
@@ -30,7 +30,7 @@ pub fn spawn_left_paddle(mut commands: Commands) {
 }
 
 pub fn spawn_right_paddle(mut commands: Commands) {
-    let half_width = GRID_WIDTH as f32 / 2.0;
+    let half_width = WIDTH as f32 / 2.0;
     
     commands.spawn((
         Sprite {
@@ -51,7 +51,7 @@ pub fn move_left_paddle(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let paddle_boundary = (GRID_HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
+    let paddle_boundary = (HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
     
     let mut transform = query.single_mut();
     let move_amount = PADDLE_SPEED * time.delta_secs();
@@ -69,7 +69,7 @@ pub fn move_right_paddle(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let paddle_boundary = (GRID_HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
+    let paddle_boundary = (HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
     
     let mut transform = query.single_mut();
     let move_amount = PADDLE_SPEED * time.delta_secs();

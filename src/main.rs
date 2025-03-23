@@ -3,7 +3,6 @@ use bevy::{prelude::*, render::pipelined_rendering::PipelinedRenderingPlugin};
 mod background;
 mod ball;
 mod paddle;
-mod pixel_grid;
 mod scoreboard;
 mod window;
 
@@ -43,5 +42,3 @@ fn main() {
         )
         .run();
 }
-
-pub const MIDDLE_LINE_WIDTH: f32 = 25.0;

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::window::{WIDTH, HEIGHT};
 
 #[derive(Resource, Default)]
 pub struct ScoreBoard {
@@ -36,7 +37,8 @@ pub fn update_scoreboard(
 }
 
 pub fn spawn_scoreboard(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let (half_width, half_height) = crate::pixel_grid::get_half_screen_size();
+    let half_width = WIDTH as f32 / 2.0;
+    let half_height = HEIGHT as f32 / 2.0;
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     
     // Left score text
