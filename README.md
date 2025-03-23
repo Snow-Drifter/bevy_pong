@@ -12,7 +12,7 @@ Pixel Pong is a modern recreation of the classic arcade game Pong. It features t
 
 - Classic Pong gameplay
 - Score tracking
-- Controls using W/S keys for the left paddle and Up/Down for the right paddle
+- Local Multiplayer
 
 ## Controls
 
