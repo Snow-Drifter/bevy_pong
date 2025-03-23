@@ -22,6 +22,7 @@ fn main() {
             paddle::spawn_right_paddle,
             background::spawn_background,
             ball::spawn_ball,
+            scoreboard::spawn_scoreboard,
         ))
         .add_systems(Update, (
             window::close_on_escape,
@@ -29,6 +30,7 @@ fn main() {
             paddle::move_right_paddle,
             ball::update_ball,
             scoreboard::update_scoreboard,
+            scoreboard::update_scoreboard_text,
             ball::reset_ball_system,
         ))
         .run();
