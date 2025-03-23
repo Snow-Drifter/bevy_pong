@@ -1,26 +1,39 @@
+/// Module for handling the ball's behavior, physics, and collision detection
 use bevy::prelude::*;
 use crate::paddle::{LeftPaddle, RightPaddle, PADDLE_WIDTH};
 use crate::scoreboard::ScoreEvent;
 use crate::window::{WIDTH, HEIGHT};
 use rand::Rng;
 
+/// Height of the ball sprite
 pub const BALL_HEIGHT: f32 = PADDLE_WIDTH;
+/// Width of the ball sprite
 pub const BALL_WIDTH: f32 = PADDLE_WIDTH;
+/// Initial speed of the ball when the game starts or after scoring
 pub const INITIAL_BALL_SPEED: f32 = 125.0;
 
+/// Component for identifying the ball entity
 #[derive(Component)]
 pub struct Ball;
 
+/// Component for entities that have movement velocity
 #[derive(Component)]
 pub struct Velocity {
+    /// X-axis velocity component
     pub x: f32,
+    /// Y-axis velocity component
     pub y: f32,
 }
 
-// Tracks ball bounces to control speed progression
+/// Tracks ball bounces to control speed progression
 #[derive(Component, Default)]
 pub struct BounceCount(u32);
 
+/// Spawns the ball entity at the center of the screen with initial velocity
+///
+/// Creates a white rectangular sprite to represent the ball,
+/// positioned at the center of the screen. Attaches Velocity and
+/// BounceCount components to control its movement and difficulty progression.
 pub fn spawn_ball(mut commands: Commands) {
     commands.spawn((
         Sprite {
@@ -42,6 +55,9 @@ pub fn spawn_ball(mut commands: Commands) {
 }
 
 /// Check if two rectangles are colliding
+///
+/// Uses axis-aligned bounding box (AABB) collision detection to determine
+/// if the ball is overlapping with a paddle. Returns true if a collision is detected.
 fn is_colliding(
     ball_pos: Vec3,
     ball_size: Vec2,
@@ -54,7 +70,11 @@ fn is_colliding(
     ball_pos.y - ball_size.y/2.0 <= paddle_pos.y + paddle_size.y/2.0
 }
 
-/// Get speed multiplier based on bounce count
+/// Get speed multiplier based on bounce count to increase difficulty over time
+///
+/// Returns a Vec2 with multipliers for the x and y velocities based on
+/// how many times the ball has bounced. Creates a difficulty progression
+/// where the ball moves faster horizontally as the rally continues.
 fn get_speed_multiplier(bounce_count: u32) -> Vec2 {
     match bounce_count {
         0..=3 => Vec2::new(1.0, 1.0),
@@ -63,7 +83,11 @@ fn get_speed_multiplier(bounce_count: u32) -> Vec2 {
     }
 }
 
-// Main ball update system - handles movement, collisions and scoring
+/// Main ball update system - handles movement, collisions and scoring
+///
+/// Updates the ball's position based on its velocity, detects and responds to
+/// collisions with paddles and walls, and triggers scoring events when the ball
+/// goes beyond the screen boundaries. Also handles progressive difficulty increases.
 pub fn update_ball(
     mut ball_query: Query<(&mut Transform, &mut Velocity, &mut BounceCount, &Sprite), With<Ball>>,
     left_paddle_query: Query<(&Transform, &Sprite), (With<LeftPaddle>, Without<Ball>)>,
@@ -114,6 +138,11 @@ pub fn update_ball(
     }
 }
 
+/// Handles ball collisions with paddles
+///
+/// Detects when the ball collides with either paddle and reverses its horizontal
+/// velocity. Also adjusts the ball position to prevent it from getting stuck
+/// inside paddles, and increments the bounce count for difficulty progression.
 fn handle_paddle_collisions(
     transform: &mut Transform,
     velocity: &mut Velocity,
@@ -140,6 +169,11 @@ fn handle_paddle_collisions(
     }
 }
 
+/// Handles ball collisions with horizontal walls
+///
+/// Detects when the ball hits the top or bottom of the screen and
+/// reverses its vertical velocity. Also adjusts the ball position
+/// to prevent it from going beyond the screen boundaries.
 fn handle_wall_collisions(
     transform: &mut Transform,
     velocity: &mut Velocity,
@@ -158,7 +192,10 @@ fn handle_wall_collisions(
     }
 }
 
-// Checks if ball went past paddles and sends appropriate score events
+/// Checks if ball went past paddles and sends appropriate score events
+///
+/// Determines if the ball has gone beyond the left or right screen boundaries
+/// and sends the corresponding ScoreEvent to update the score and reset the ball.
 fn check_for_scoring(
     transform: &Transform, 
     half_width: f32,
@@ -174,7 +211,11 @@ fn check_for_scoring(
     }
 }
 
-// Resets ball position and sets velocity after scoring
+/// Resets ball position and sets velocity after scoring
+///
+/// Listens for ScoreEvent events and resets the ball to the center of the screen
+/// with a new random velocity direction. The horizontal direction is based on
+/// which player just scored, while the vertical direction is randomized.
 pub fn reset_ball_system(
     mut score_events: EventReader<ScoreEvent>,
     mut ball_query: Query<(&mut Transform, &mut Velocity, &mut BounceCount), With<Ball>>,

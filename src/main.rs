@@ -1,13 +1,23 @@
+/// Main entry point for the Pixel Pong game application
 use bevy::{prelude::*, render::pipelined_rendering::PipelinedRenderingPlugin};
 
+/// Background module responsible for creating the play area and visual elements
 mod background;
+/// Ball module with ball physics, movement and collision detection
 mod ball;
+/// Paddle module handling player input and paddle positioning
 mod paddle;
+/// Scoreboard module for tracking and displaying player scores
 mod scoreboard;
+/// Window module for handling window settings and camera configuration
 mod window;
 
 use scoreboard::{ScoreBoard, ScoreEvent};
 
+/// Main function that configures and runs the game
+///
+/// Sets up the Bevy app with all necessary plugins, resources, events, and systems.
+/// Organizes systems into appropriate startup and update schedules.
 fn main() {
     App::new()
         .add_plugins(

@@ -1,8 +1,15 @@
+/// Module for handling the game's background visual elements
 use bevy::prelude::*;
 use crate::{paddle::PADDLE_WIDTH, window::{WIDTH, HEIGHT}};
 
+/// Width of the dotted line in the middle of the playing field
 pub const MIDDLE_LINE_WIDTH: f32 = PADDLE_WIDTH;
 
+/// Spawns the game background with dark play area and dotted centerline
+///
+/// Creates a dark rectangle covering the entire play area as the background,
+/// then adds a series of evenly spaced small rectangles to form a dotted line
+/// down the center of the screen, creating the classic Pong visual style.
 pub fn spawn_background(mut commands: Commands) {
     let half_width = WIDTH as f32 / 2.0;
     let half_height = HEIGHT as f32 / 2.0;
