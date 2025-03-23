@@ -1,5 +1,10 @@
 use bevy::prelude::*;
-use crate::pixel_grid::{PIXEL_SIZE, get_half_screen_size};
+use crate::pixel_grid::{GRID_HEIGHT, GRID_WIDTH};
+
+pub const PADDLE_HEIGHT: f32 = 28.0;
+pub const PADDLE_WIDTH: f32 = 9.0;
+pub const PADDLE_SPEED: f32 = 500.0;
+pub const PADDLE_OFFSET: f32 = 40.0;
 
 #[derive(Component)]
 pub struct LeftPaddle;
@@ -8,16 +13,16 @@ pub struct LeftPaddle;
 pub struct RightPaddle;
 
 pub fn spawn_left_paddle(mut commands: Commands) {
-    let (half_width, _) = get_half_screen_size();
+    let half_width = GRID_WIDTH as f32 / 2.0;
     
     commands.spawn((
         Sprite {
             color: Color::WHITE,
-            custom_size: Some(Vec2::new(PIXEL_SIZE, PIXEL_SIZE * 4.0)), // 1x3 pixels paddle
+            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
             ..default()
         },
         Transform {
-            translation: Vec3::new(-half_width + PIXEL_SIZE, 0.0, 0.0),
+            translation: Vec3::new(-half_width + PADDLE_WIDTH + PADDLE_OFFSET, 0.0, 0.0),
             ..default()
         },
         LeftPaddle,
@@ -25,16 +30,16 @@ pub fn spawn_left_paddle(mut commands: Commands) {
 }
 
 pub fn spawn_right_paddle(mut commands: Commands) {
-    let (half_width, _) = get_half_screen_size();
+    let half_width = GRID_WIDTH as f32 / 2.0;
     
     commands.spawn((
         Sprite {
             color: Color::WHITE,
-            custom_size: Some(Vec2::new(PIXEL_SIZE, PIXEL_SIZE * 4.0)), // 1x3 pixels paddle
+            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
             ..default()
         },
         Transform {
-            translation: Vec3::new(half_width - PIXEL_SIZE, 0.0, 0.0),
+            translation: Vec3::new(half_width - PADDLE_WIDTH - PADDLE_OFFSET, 0.0, 0.0),
             ..default()
         },
         RightPaddle,
@@ -46,25 +51,16 @@ pub fn move_left_paddle(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (_, half_height) = get_half_screen_size();
-    
-    // Paddle is 3 pixels tall, so need to offset by 1.5 pixels
-    let paddle_height = PIXEL_SIZE * 4.0;
-    let paddle_half_height = paddle_height / 2.0;
-    let paddle_boundary = half_height - paddle_half_height;
+    let paddle_boundary = (GRID_HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
     
     let mut transform = query.single_mut();
-    let base_speed = PIXEL_SIZE * 4.0; // Move 4 pixels per second
-    let move_amount = base_speed * time.delta_secs();
+    let move_amount = PADDLE_SPEED * time.delta_secs();
     
-    // Move based on accumulated time instead of jumping full pixels
     if keyboard.pressed(KeyCode::KeyW) {
-        let new_y = (transform.translation.y + move_amount).min(paddle_boundary);
-        transform.translation.y = new_y;
+        transform.translation.y = (transform.translation.y + move_amount).min(paddle_boundary);
     }
     if keyboard.pressed(KeyCode::KeyS) {
-        let new_y = (transform.translation.y - move_amount).max(-paddle_boundary);
-        transform.translation.y = new_y;
+        transform.translation.y = (transform.translation.y - move_amount).max(-paddle_boundary);
     }
 }
 
@@ -73,24 +69,15 @@ pub fn move_right_paddle(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (_, half_height) = get_half_screen_size();
-    
-    // Paddle is 3 pixels tall, so need to offset by 1.5 pixels
-    let paddle_height = PIXEL_SIZE * 4.0;
-    let paddle_half_height = paddle_height / 2.0;
-    let paddle_boundary = half_height - paddle_half_height;
+    let paddle_boundary = (GRID_HEIGHT as f32 - PADDLE_HEIGHT) / 2.0;
     
     let mut transform = query.single_mut();
-    let base_speed = PIXEL_SIZE * 4.0; // Move 4 pixels per second
-    let move_amount = base_speed * time.delta_secs();
+    let move_amount = PADDLE_SPEED * time.delta_secs();
     
-    // Move based on accumulated time instead of jumping full pixels
     if keyboard.pressed(KeyCode::ArrowUp) {
-        let new_y = (transform.translation.y + move_amount).min(paddle_boundary);
-        transform.translation.y = new_y;
+        transform.translation.y = (transform.translation.y + move_amount).min(paddle_boundary);
     }
     if keyboard.pressed(KeyCode::ArrowDown) {
-        let new_y = (transform.translation.y - move_amount).max(-paddle_boundary);
-        transform.translation.y = new_y;
+        transform.translation.y = (transform.translation.y - move_amount).max(-paddle_boundary);
     }
 } 
